@@ -23,16 +23,16 @@ A **Flask‑based interactive dashboard** for exploring the **Superstore Sales d
 
 ## 📂 Folder Structure
 ai_business_dashboard/
-├── run_dashboard.py # Start Flask + auto‑open browser
-├── app.py           # Flask backend (loads CSV, filters, KPIs, charts data)
-├── requirements.txt # Python dependencies
+├── run_dashboard.py
+├── app.py
+├── requirements.txt
 ├── data/
-│ └── Superstore sales dataset.csv
+│   └── Superstore sales dataset.csv
 ├── templates/
-│ └── dashboard.html # HTML + JS charts (no external JS needed)
+│   └── dashboard.html
 └── static/
-└── css/
-└── dashboard.css    # Responsive styling for dashboard
+    └── css/
+        └── dashboard.css
 
 
 ---
