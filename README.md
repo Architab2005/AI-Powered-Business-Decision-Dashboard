@@ -27,6 +27,7 @@ An interactive Flask‑based dashboard for the **Superstore Sales dataset**, wit
 ---
 
 ## 📂 Folder Structure
+```
 ai_business_dashboard/
 ├── run_dashboard.py
 ├── app.py
@@ -38,7 +39,7 @@ ai_business_dashboard/
 └── static/
     └── css/
         └── dashboard.css
-
+```
 
 ---
 
