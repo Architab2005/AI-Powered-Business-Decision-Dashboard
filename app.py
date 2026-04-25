@@ -1,6 +1,7 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, Response
 import pandas as pd
 import os
+from io import StringIO
 
 app = Flask(__name__, template_folder="templates")
 
@@ -11,11 +12,9 @@ DATA_PATH = os.path.join("data", "Superstore sales dataset.csv")
 def index():
     # Load data
     df = pd.read_csv(DATA_PATH)
-
-    # Convert Order Date
     df["Order Date"] = pd.to_datetime(df["Order Date"], dayfirst=True)
 
-    # --- Filters ---
+    # Filters
     selected_region = request.args.get("region", None)
     selected_category = request.args.get("category", None)
     from_date = request.args.get("from_date", None)
@@ -42,14 +41,14 @@ def index():
     total_orders = df_filtered["Order ID"].nunique()
 
     # Profit by Region
-    region_profit = (
-        df_filtered.groupby("Region")["Profit"]
-        .sum()
-        .round(2)
-        .to_dict()
-    )
+    region_profit = df_filtered.groupby("Region")["Profit"].sum().round(2).to_dict()
     region_labels = list(region_profit.keys())
     region_values = list(region_profit.values())
+
+    # Sales by Category (Pie)
+    category_sales = df_filtered.groupby("Category")["Sales"].sum().round(2).to_dict()
+    category_labels = list(category_sales.keys())
+    category_values = list(category_sales.values())
 
     # Monthly Sales
     df_filtered["Month"] = df_filtered["Order Date"].dt.to_period("M")
@@ -69,6 +68,8 @@ def index():
         total_orders=total_orders,
         region_labels=region_labels,
         region_values=region_values,
+        category_labels=category_labels,
+        category_values=category_values,
         monthly_labels=monthly_labels,
         monthly_values=monthly_values,
         regions=regions,
@@ -77,6 +78,39 @@ def index():
         selected_category=selected_category,
         from_date=from_date,
         to_date=to_date,
+    )
+
+
+@app.route("/export/csv")
+def export_csv():
+    df = pd.read_csv(DATA_PATH)
+    df["Order Date"] = pd.to_datetime(df["Order Date"], dayfirst=True)
+
+    selected_region = request.args.get("region", None)
+    selected_category = request.args.get("category", None)
+    from_date = request.args.get("from_date", None)
+    to_date = request.args.get("to_date", None)
+
+    df_filtered = df.copy()
+
+    if selected_region:
+        df_filtered = df_filtered[df_filtered["Region"] == selected_region]
+    if selected_category:
+        df_filtered = df_filtered[df_filtered["Category"] == selected_category]
+    if from_date:
+        df_filtered = df_filtered[df_filtered["Order Date"] >= pd.to_datetime(from_date)]
+    if to_date:
+        df_filtered = df_filtered[df_filtered["Order Date"] <= pd.to_datetime(to_date)]
+
+    csv_buffer = StringIO()
+    df_filtered.to_csv(csv_buffer, index=False)
+
+    return Response(
+        csv_buffer.getvalue(),
+        mimetype="text/csv",
+        headers={
+            "Content-Disposition": "attachment;filename=filtered_superstore.csv"
+        }
     )
 
 

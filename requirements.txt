@@ -1,5 +1,3 @@
 Flask
 pandas
-matplotlib
-plotly
 numpy<2.3

@@ -6,10 +6,11 @@
     <title>AI‑Powered Business Decision Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}" />
 
-    <!-- Pass data to JS -->
     <script>
         window.regionLabels = {{ region_labels | tojson | safe }};
         window.regionValues = {{ region_values | tojson | safe }};
+        window.categoryLabels = {{ category_labels | tojson | safe }};
+        window.categoryValues = {{ category_values | tojson | safe }};
         window.monthlyLabels = {{ monthly_labels | tojson | safe }};
         window.monthlyValues = {{ monthly_values | tojson | safe }};
     </script>
@@ -51,7 +52,8 @@
                     <input type="date" id="to_date" value="{{ to_date }}">
                 </div>
 
-                <button id="apply-filters">Apply</button>
+                <button id="apply-filters">Apply Filters</button>
+                <button id="export-csv">Export as CSV</button>
             </div>
         </header>
 
@@ -77,7 +79,13 @@
                 <canvas id="profitChart"></canvas>
             </div>
 
-            <!-- MONTHLY SALES TREND (Line) -->
+            <!-- SALES BY CATEGORY (Pie) -->
+            <div class="chart">
+                <h2>Sales by Category (Pie)</h2>
+                <canvas id="categoryChart"></canvas>
+            </div>
+
+            <!-- MONTHLY SALES TEND (Line) -->
             <div class="chart">
                 <h2>Monthly Sales Trend</h2>
                 <canvas id="monthlyChart"></canvas>
@@ -99,12 +107,12 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
-        // Apply filters (reload with query params)
+        // Apply filters
         document.getElementById("apply-filters").addEventListener("click", () => {
-            const region = document.getElementById("region").value;
-            const category = document.getElementById("category").value;
-            const from_date = document.getElementById("from_date").value;
-            const to_date = document.getElementById("to_date").value;
+            const region = document.getElementById("region")?.value;
+            const category = document.getElementById("category")?.value;
+            const from_date = document.getElementById("from_date")?.value;
+            const to_date = document.getElementById("to_date")?.value;
 
             const url = new URL(window.location.href);
             if (region) url.searchParams.set("region", region); else url.searchParams.delete("region");
@@ -115,13 +123,23 @@
             window.location.href = url.toString();
         });
 
-        // Log data for debug
-        console.log("Region Labels:", window.regionLabels);
-        console.log("Region Values:", window.regionValues);
-        console.log("Monthly Labels:", window.monthlyLabels);
-        console.log("Monthly Values:", window.monthlyValues);
+        // Export CSV
+        document.getElementById("export-csv").addEventListener("click", () => {
+            const region = document.getElementById("region")?.value;
+            const category = document.getElementById("category")?.value;
+            const from_date = document.getElementById("from_date")?.value;
+            const to_date = document.getElementById("to_date")?.value;
 
-        // --- Profit by Region (Bar) ---
+            const url = new URL("/export/csv", window.location.origin);
+            if (region) url.searchParams.set("region", region);
+            if (category) url.searchParams.set("category", category);
+            if (from_date) url.searchParams.set("from_date", from_date);
+            if (to_date) url.searchParams.set("to_date", to_date);
+
+            window.location.href = url.toString();
+        });
+
+        // Profit by Region (Bar)
         const profitChartEl = document.getElementById("profitChart");
         if (profitChartEl && window.regionLabels && window.regionValues) {
             const ctx1 = profitChartEl.getContext("2d");
@@ -152,11 +170,53 @@
                             title: { display: true, text: "Profit ($)" },
                         },
                     },
+                    onClick: (e, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const clickedRegion = window.regionLabels[index];
+
+                            const url = new URL(window.location.href);
+                            url.searchParams.set("region", clickedRegion);
+                            window.location.href = url.toString();
+                        }
+                    },
                 },
             });
         }
 
-        // --- Monthly Sales Trend (Line) ---
+        // Sales by Category (Pie)
+        const categoryChartEl = document.getElementById("categoryChart");
+        if (categoryChartEl && window.categoryLabels && window.categoryValues) {
+            const ctx2 = categoryChartEl.getContext("2d");
+            new Chart(ctx2, {
+                type: "pie",
+                data: {
+                    labels: window.categoryLabels,
+                    datasets: [
+                        {
+                            data: window.categoryValues,
+                            backgroundColor: [
+                                "#FF6384",
+                                "#36A2EB",
+                                "#FFCE56",
+                                "#4BC0C0",
+                                "#FF9F40",
+                            ],
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: "bottom" },
+                        tooltip: { enabled: true },
+                    },
+                },
+            });
+        }
+
+        // Monthly Sales (Line)
         const monthlyChartEl = document.getElementById("monthlyChart");
         if (monthlyChartEl && window.monthlyLabels && window.monthlyValues) {
             const ctx3 = monthlyChartEl.getContext("2d");
@@ -194,10 +254,6 @@
                             beginAtZero: true,
                             title: { display: true, text: "Sales ($)" },
                         },
-                    },
-                    interaction: {
-                        mode: "index",
-                        intersect: false,
                     },
                 },
             });
