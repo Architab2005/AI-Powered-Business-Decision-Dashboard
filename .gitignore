@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Virtual Environment
+.venv/
+venv/
+env/
+
+# Jupyter / IPython
+.ipynb_checkpoints
+*.ipynb
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+logs
+*.log
+
+# Data (optional, keep only if you want to ignore large CSV)
+# data/*.csv
+# data/
+
+# Secrets (if you ever add API keys)
+secrets.py
+config.py

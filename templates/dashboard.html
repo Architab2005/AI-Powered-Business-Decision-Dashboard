@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI‑Powered Business Decision Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}" />
+
+    <!-- Pass data to JS -->
+    <script>
+        window.regionLabels = {{ region_labels | tojson | safe }};
+        window.regionValues = {{ region_values | tojson | safe }};
+        window.monthlyLabels = {{ monthly_labels | tojson | safe }};
+        window.monthlyValues = {{ monthly_values | tojson | safe }};
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>AI‑Powered Business Decision Dashboard</h1>
+
+            <!-- Filters -->
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="region">Region</label>
+                    <select id="region">
+                        <option value="">All Regions</option>
+                        {% for r in regions %}
+                        <option value="{{ r }}" {% if r == selected_region %}selected{% endif %}>{{ r }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="category">Category</label>
+                    <select id="category">
+                        <option value="">All Categories</option>
+                        {% for c in categories %}
+                        <option value="{{ c }}" {% if c == selected_category %}selected{% endif %}>{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="from_date">From Date</label>
+                    <input type="date" id="from_date" value="{{ from_date }}">
+                </div>
+
+                <div class="filter-group">
+                    <label for="to_date">To Date</label>
+                    <input type="date" id="to_date" value="{{ to_date }}">
+                </div>
+
+                <button id="apply-filters">Apply</button>
+            </div>
+        </header>
+
+        <section class="kpi-cards">
+            <div class="card">
+                <h3>Total Sales</h3>
+                <p>{{ "%.2f"|format(total_sales) }}</p>
+            </div>
+            <div class="card">
+                <h3>Total Profit</h3>
+                <p>{{ "%.2f"|format(total_profit) }}</p>
+            </div>
+            <div class="card">
+                <h3>Total Orders</h3>
+                <p>{{ total_orders }}</p>
+            </div>
+        </section>
+
+        <section class="charts">
+            <!-- PROFIT BY REGION (Bar) -->
+            <div class="chart">
+                <h2>Profit by Region</h2>
+                <canvas id="profitChart"></canvas>
+            </div>
+
+            <!-- MONTHLY SALES TREND (Line) -->
+            <div class="chart">
+                <h2>Monthly Sales Trend</h2>
+                <canvas id="monthlyChart"></canvas>
+            </div>
+        </section>
+
+        <footer>
+            <div class="footer-content">
+                <span class="name">Developed By - Archita.B</span>
+                <span>|</span>
+                <span class="title">B.TECH CSE'26</span>
+                <span>|</span>
+                <span>Tech‑Driven Business Solutions Enthusiast</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        // Apply filters (reload with query params)
+        document.getElementById("apply-filters").addEventListener("click", () => {
+            const region = document.getElementById("region").value;
+            const category = document.getElementById("category").value;
+            const from_date = document.getElementById("from_date").value;
+            const to_date = document.getElementById("to_date").value;
+
+            const url = new URL(window.location.href);
+            if (region) url.searchParams.set("region", region); else url.searchParams.delete("region");
+            if (category) url.searchParams.set("category", category); else url.searchParams.delete("category");
+            if (from_date) url.searchParams.set("from_date", from_date); else url.searchParams.delete("from_date");
+            if (to_date) url.searchParams.set("to_date", to_date); else url.searchParams.delete("to_date");
+
+            window.location.href = url.toString();
+        });
+
+        // Log data for debug
+        console.log("Region Labels:", window.regionLabels);
+        console.log("Region Values:", window.regionValues);
+        console.log("Monthly Labels:", window.monthlyLabels);
+        console.log("Monthly Values:", window.monthlyValues);
+
+        // --- Profit by Region (Bar) ---
+        const profitChartEl = document.getElementById("profitChart");
+        if (profitChartEl && window.regionLabels && window.regionValues) {
+            const ctx1 = profitChartEl.getContext("2d");
+            new Chart(ctx1, {
+                type: "bar",
+                data: {
+                    labels: window.regionLabels,
+                    datasets: [
+                        {
+                            label: "Profit",
+                            data: window.regionValues,
+                            backgroundColor: "#764ba2",
+                            borderColor: "#667eea",
+                            borderWidth: 1,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: { enabled: true },
+                        legend: { display: false },
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: "Profit ($)" },
+                        },
+                    },
+                },
+            });
+        }
+
+        // --- Monthly Sales Trend (Line) ---
+        const monthlyChartEl = document.getElementById("monthlyChart");
+        if (monthlyChartEl && window.monthlyLabels && window.monthlyValues) {
+            const ctx3 = monthlyChartEl.getContext("2d");
+            new Chart(ctx3, {
+                type: "line",
+                data: {
+                    labels: window.monthlyLabels,
+                    datasets: [
+                        {
+                            label: "Monthly Sales",
+                            data: window.monthlyValues,
+                            backgroundColor: "rgba(118, 75, 162, 0.2)",
+                            borderColor: "#764ba2",
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.3,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: { enabled: true },
+                        legend: { display: true },
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45,
+                            },
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: "Sales ($)" },
+                        },
+                    },
+                    interaction: {
+                        mode: "index",
+                        intersect: false,
+                    },
+                },
+            });
+        }
+    </script>
+</body>
+</html>
