@@ -31,6 +31,7 @@ An interactive Flask‑based dashboard for the **Superstore Sales dataset**, wit
 ai_business_dashboard/
 ├── run_dashboard.py
 ├── app.py
+├── LICENSE
 ├── requirements.txt
 ├── data/
 │   └── Superstore sales dataset.csv
