@@ -90,6 +90,10 @@ pip install -r requirements.txt
 - **Monthly Sales Trend (Line)** – historical sales with a clean line chart.
 
 ---
+## 📄 License
+This project is licensed under the MIT License.
+
+---
 
 ## 📄 Developed By
 
